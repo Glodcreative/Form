@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ translations.confirmation_title }}</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="text-right">
+            <a href="/set_language/ar" class="btn btn-sm btn-primary">العربية</a>
+            <a href="/set_language/fr" class="btn btn-sm btn-primary">Français</a>
+            <a href="/set_language/en" class="btn btn-sm btn-primary">English</a>
+        </div>
+        <h1 class="text-center">{{ translations.confirmation_title }}</h1>
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">{{ translations.order_details }}</h5>
+                <p class="card-text"><strong>{{ translations.nom_complet }}:</strong> {{ data.nom_complet }}</p>
+                <p class="card-text"><strong>{{ translations.telephone1 }}:</strong> {{ data.telephone1 }}</p>
+                <p class="card-text"><strong>{{ translations.telephone2 }}:</strong> {{ data.telephone2 }}</p>
+                <p class="card-text"><strong>{{ translations.wilaya }}:</strong> {{ data.wilaya }}</p>
+                {% if data.commune %}
+                    <p class="card-text"><strong>{{ translations.commune }}:</strong> {{ data.commune }}</p>
+                {% endif %}
+                {% if data.adresse_complet %}
+                    <p class="card-text"><strong>{{ translations.adresse_complet }}:</strong> {{ data.adresse_complet }}</p>
+                {% endif %}
+                {% if data.office %}
+                    <p class="card-text"><strong>{{ translations.office }}:</strong> {{ data.office }}</p>
+                {% endif %}
+                <p class="card-text"><strong>{{ translations.note }}:</strong> {{ data.note }}</p>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-primary">{{ translations.back_home }}</a>
+        </div>
+    </div>
+</body>
+</html>
