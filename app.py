@@ -1,17 +1,33 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+from dotenv import load_dotenv
+import os
 import json
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = 'khalil55T#*###'
 
 # إعداد Google Sheets API
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
-SERVICE_ACCOUNT_FILE = 'credentials.json'
+SERVICE_ACCOUNT_INFO = {
+    "type": os.getenv("TYPE"),
+    "project_id": os.getenv("PROJECT_ID"),
+    "private_key_id": os.getenv("PRIVATE_KEY_ID"),
+    "private_key": os.getenv("PRIVATE_KEY").replace('\\n', '\n'),
+    "client_email": os.getenv("CLIENT_EMAIL"),
+    "client_id": os.getenv("CLIENT_ID"),
+    "auth_uri": os.getenv("AUTH_URI"),
+    "token_uri": os.getenv("TOKEN_URI"),
+    "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_X509_CERT_URL"),
+    "client_x509_cert_url": os.getenv("CLIENT_X509_CERT_URL"),
+    "universe_domain": os.getenv("UNIVERSE_DOMAIN")
+}
 
-credentials = service_account.Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+credentials = service_account.Credentials.from_service_account_info(
+    SERVICE_ACCOUNT_INFO, scopes=SCOPES)
 
 service = build('sheets', 'v4', credentials=credentials)
 
@@ -99,7 +115,7 @@ def get_communes():
     wilaya = request.args.get('wilaya')
     selected_wilaya = next((w for w in wilayas_data if w['locationName'] == wilaya), None)
     if selected_wilaya:
-        return jsonify(selected_wilaya['subLocations'])
+        return jsonify(selected_wilaya.get('subLocations', []))
     return jsonify([])
 
 @app.route('/get_offices')
@@ -113,77 +129,17 @@ def get_offices():
 @app.route('/submit', methods=['POST'])
 def submit():
     try:
-        data = request.form.to_dict()
-        print("البيانات المستلمة:", data)
-
-        delivery_type = data.get('delivery_type')
-        if delivery_type == 'home':
-            values = [
-                [
-                    data.get('nom_complet'),
-                    data.get('telephone1'),
-                    data.get('telephone2'),
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    data.get('adresse_complet'),
-                    '',
-                    '',
-                    data.get('wilaya'),
-                    data.get('commune'),
-                    '',
-                    data.get('note'),
-                ]
-            ]
-        elif delivery_type == 'office':
-            values = [
-                [
-                    data.get('nom_complet'),
-                    data.get('telephone1'),
-                    data.get('telephone2'),
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    '',
-                    data.get('wilaya'),
-                    data.get('office'),
-                    '',
-                    data.get('note'),
-                    '',
-                    '',
-                    'OUI'
-                ]
-            ]
-        else:
-            return jsonify({"status": "error", "message": "نوع التوصيل غير معروف"}), 400
-
-        sheet = service.spreadsheets()
-        sheet.values().append(
-            spreadsheetId=SPREADSHEET_ID,
-            range="form responses!A1:R1",
-            valueInputOption="RAW",
-            insertDataOption="INSERT_ROWS",
-            body={"values": values}
-        ).execute()
-
-        session['order_data'] = data
-        return jsonify({"status": "success"}), 200
+        # معالجة البيانات المرسلة من النموذج
+        order_data = request.form.to_dict()
+        session['order_data'] = order_data
+        return redirect(url_for('confirmation'))
     except Exception as e:
-        print("حدث خطأ:", str(e))
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return str(e), 500
 
 @app.route('/confirmation')
 def confirmation():
     data = session.get('order_data', {})
-    language = session.get('language', app.config['DEFAULT_LANGUAGE'])
-    print("بيانات الجلسة:", data)
-    return render_template('confirmation.html', data=data, translations=translations[language])
+    return render_template('confirmation.html', data=data)
 
 if __name__ == '__main__':
     app.run(debug=True)
